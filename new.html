@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADS EARN bd</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    
+    <script src='//niphaumeenses.net/vignette.min.js' data-zone='8694691' data-sdk='show_8694691'></script>
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f5f5f5;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 500px;
+        }
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 30px;
+        }
+        .balance {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+        .btn {
+            font-size: 1.2rem;
+            padding: 12px 30px;
+            margin: 10px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover,
+        .btn-success:hover,
+        .btn-warning:hover,
+        .btn-red:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container animate__animated animate__fadeIn" id="mainPage">
+    <h2>Watch Ads and Earn Rewards!</h2>
+    <div class="balance" id="balance">Balance: 0 points</div>
+    <div>
+        <button id="showAdButton1" class="btn btn-primary">Show Ad 1</button>
+        <button id="showAdButton2" class="btn btn-success">Show Ad 2</button>
+        <button id="showAdButton3" class="btn btn-warning">Show Ad 3</button>
+        <button id="showAdButton4" class="btn btn-red">Show Ad 4</button>
+    </div>
+    <button id="withdrawButton" class="btn btn-dark mt-3">Withdraw </button>
+</div>
+
+<div class="container hidden" id="withdrawPage">
+    <h2>Withdraw Your Earnings</h2>
+    <div class="mb-3">
+        <input id="userName" type="text" class="form-control mb-2" placeholder="Your Name or Number">
+        <select id="paymentMethod" class="form-select mb-2">
+            <option value="" disabled selected>Select Payment Method</option>
+            <option value="BKash">BKash</option>
+            <option value="Nagad">Nagad</option>
+        </select>
+        <input id="amount" type="number" class="form-control mb-2" placeholder="Amount">
+        <button id="submitRequest" class="btn btn-primary w-100">Submit Request</button>
+    </div>
+    <button id="backButton" class="btn btn-secondary">Back to Home</button>
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+<script>
+    const TELEGRAM_BOT_TOKEN = "7756947298:AAEGw4qV_lPJ_26UuE2Gfj2mIfehej9h8b4";
+    const TELEGRAM_CHAT_ID = "6076273140";
+
+    let points = parseInt(localStorage.getItem('points')) || 0;
+
+    function updateBalance() {
+        document.getElementById('balance').innerText = `Balance: ${points} points`;
+        localStorage.setItem('points', points);
+    }
+
+    function showAd(buttonId) {
+        show_8682962().then(() => {
+            points += 10;
+            updateBalance();
+            toastr.success(`You watched ${buttonId} and earned 10 points!`, 'Congratulations');
+        }).catch((error) => {
+            toastr.error('There was an error displaying the ad.', 'Error');
+            console.error(error);
+        });
+    }
+
+    function switchToWithdrawPage() {
+        document.getElementById('mainPage').classList.add('hidden');
+        document.getElementById('withdrawPage').classList.remove('hidden');
+    }
+
+    function switchToMainPage() {
+        document.getElementById('withdrawPage').classList.add('hidden');
+        document.getElementById('mainPage').classList.remove('hidden');
+    }
+
+    function submitWithdrawalRequest() {
+        const userName = document.getElementById('userName').value;
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const amount = parseInt(document.getElementById('amount').value) || 0;
+
+        if (!userName || !paymentMethod || amount > points) {
+            toastr.error('Please fill out all fields correctly or ensure you have enough balance.', 'Error');
+            return;
+        }
+
+        points -= amount;
+        updateBalance();
+
+        const message = `
+ *Withdrawal Request*
+ Name/Number: ${userName}
+ Method: ${paymentMethod}
+ Amount: ${amount}
+ Status: Pending Review
+        `;
+
+        fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: 'Markdown' })
+        }).then(() => {
+            toastr.success('Request submitted successfully.', 'Success');
+            switchToMainPage();
+        }).catch(() => {
+            toastr.error('Failed to send request to Telegram.', 'Error');
+        });
+    }
+
+    document.getElementById('showAdButton1').addEventListener('click', () => showAd('Ad 1'));
+    document.getElementById('showAdButton2').addEventListener('click', () => showAd('Ad 2'));
+    document.getElementById('showAdButton3').addEventListener('click', () => showAd('Ad 3'));
+    document.getElementById('showAdButton4').addEventListener('click', () => showAd('Ad 4'));
+    document.getElementById('withdrawButton').addEventListener('click', switchToWithdrawPage);
+    document.getElementById('backButton').addEventListener('click', switchToMainPage);
+    document.getElementById('submitRequest').addEventListener('click', submitWithdrawalRequest);
+
+    updateBalance();
+</script>
+</body>
+</html>
